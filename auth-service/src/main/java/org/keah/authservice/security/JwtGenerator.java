@@ -19,28 +19,20 @@ public class JwtGenerator {
     @Value("${jwt.expiration}")
     private long expirationMs;
 
-    // 🔐 Générer une clé HS256 valide (>= 256 bits)
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    // ===============================
-    // Génération du token
-    // ===============================
-    public String generateToken(String email, String role) {
-
+    public String generateToken(String email, Long userId) {
         return Jwts.builder()
                 .setSubject(email)
-                .claim("role", role)
+                .claim("id", userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // ===============================
-    // Validation
-    // ===============================
     public boolean validateToken(String token) {
         try {
             extractAllClaims(token);
@@ -52,10 +44,6 @@ public class JwtGenerator {
 
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
-    }
-
-    public String extractRole(String token) {
-        return extractAllClaims(token).get("role", String.class);
     }
 
     private Claims extractAllClaims(String token) {
